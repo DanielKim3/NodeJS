@@ -1,6 +1,7 @@
 import http from "http";
 import WebSocket from "ws";
 import express from "express";
+import { socket } from "dgram";
 
 const app = express();
 
@@ -19,10 +20,14 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-function handleConnection(frontSocket) {
-  console.log(frontSocket);
-}
-
-wss.on("connection", handleConnection);
+//connection이 생기면 socket을 받는다
+wss.on("connection", (socket) => {
+  console.log("브라우저에 연결되었습니다.");
+  socket.on("close", () => console.log("연결이 끊어졌습니다."));
+  socket.on("message", (message) => {
+    console.log(message.toString("utf8"));
+  });
+  socket.send("hello world");
+});
 
 server.listen(3000, handleListen);
