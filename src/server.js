@@ -21,13 +21,37 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 //connection이 생기면 socket을 받는다
+function onSocketClose() {
+  console.log("연결이 끊어졌습니다.");
+}
+
+// 서버에 연결하면 connection을 array안에 넣는다.
+const sockets = [];
+
 wss.on("connection", (socket) => {
+  sockets.push(socket); // socket array에 push
   console.log("브라우저에 연결되었습니다.");
-  socket.on("close", () => console.log("연결이 끊어졌습니다."));
+  socket.on("close", onSocketClose);
   socket.on("message", (message) => {
-    console.log(message.toString("utf8"));
+    const messageString = message.toString("utf8");
+    const parsed = JSON.parse(messageString);
+    switch (parsed.type) {
+      case "new_message":
+        console.log(parsed, messageString);
+        sockets.forEach((aSocket) => aSocket.send(parsed.payload));
+      case "nickname":
+        console.log(parsed.payload);
+    }
   });
-  socket.send("hello world");
 });
 
 server.listen(3000, handleListen);
+
+{
+  type: "message";
+  payload: "hello everyone!";
+}
+{
+  type: "nickname";
+  payload: "woojin";
+}
