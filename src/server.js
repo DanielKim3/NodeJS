@@ -30,17 +30,20 @@ const sockets = [];
 
 wss.on("connection", (socket) => {
   sockets.push(socket); // socket array에 push
+  socket["nickname"] = "Unknown";
   console.log("브라우저에 연결되었습니다.");
   socket.on("close", onSocketClose);
   socket.on("message", (message) => {
     const messageString = message.toString("utf8");
-    const parsed = JSON.parse(messageString);
-    switch (parsed.type) {
+    const msg = JSON.parse(messageString);
+    switch (msg.type) {
       case "new_message":
-        console.log(parsed, messageString);
-        sockets.forEach((aSocket) => aSocket.send(parsed.payload));
+        console.log(msg, messageString);
+        sockets.forEach((aSocket) =>
+          aSocket.send(`${socket.nickname}: ${msg.payload}`)
+        );
       case "nickname":
-        console.log(parsed.payload);
+        socket["nickname"] = msg.payload;
     }
   });
 });
