@@ -1,5 +1,5 @@
 import http from "http";
-import WebSocket from "ws";
+import SocketIO from "socket.io";
 import express from "express";
 import { socket } from "dgram";
 
@@ -17,8 +17,12 @@ app.get("/*", (_, res) => res.redirect("/"));
 
 const handleListen = () => console.log(`Listening on http://localhost:3000`);
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const httpServer = http.createServer(app);
+const wsServer = SocketIO(httpServer);
+
+wsServer.on("connection", (socket) => {
+  socket.on("room", (msg) => console.log(msg));
+});
 
 //connection이 생기면 socket을 받는다
 function onSocketClose() {
@@ -26,29 +30,30 @@ function onSocketClose() {
 }
 
 // 서버에 연결하면 connection을 array안에 넣는다.
-const sockets = [];
+//const wss = new WebSocket.Server({ server });
+// const sockets = [];
 
-wss.on("connection", (socket) => {
-  sockets.push(socket); // socket array에 push
-  socket["nickname"] = "Unknown";
-  console.log("브라우저에 연결되었습니다.");
-  socket.on("close", onSocketClose);
-  socket.on("message", (message) => {
-    const messageString = message.toString("utf8");
-    const msg = JSON.parse(messageString);
-    switch (msg.type) {
-      case "new_message":
-        console.log(msg, messageString);
-        sockets.forEach((aSocket) =>
-          aSocket.send(`${socket.nickname}: ${msg.payload}`)
-        );
-      case "nickname":
-        socket["nickname"] = msg.payload;
-    }
-  });
-});
+// wss.on("connection", (socket) => {
+//   sockets.push(socket); // socket array에 push
+//   socket["nickname"] = "Unknown";
+//   console.log("브라우저에 연결되었습니다.");
+//   socket.on("close", onSocketClose);
+//   socket.on("message", (message) => {
+//     const messageString = message.toString("utf8");
+//     const msg = JSON.parse(messageString);
+//     switch (msg.type) {
+//       case "new_message":
+//         console.log(msg, messageString);
+//         sockets.forEach((aSocket) =>
+//           aSocket.send(`${socket.nickname}: ${msg.payload}`)
+//         );
+//       case "nickname":
+//         socket["nickname"] = msg.payload;
+//     }
+//   });
+// });
 
-server.listen(3000, handleListen);
+httpServer.listen(3000, handleListen);
 
 {
   type: "message";
